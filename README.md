@@ -29,11 +29,11 @@ class TgLogger extends TelegramLogger
     //set to empty if you want to always send messages. default [9, 18]
     //protected const WORKING_HOURS_RANGE = [];
     
-    //set to 0 if you don't need backtrace in message. default depth : 2
+    //set to 0 if you don't need backtrace in message. default depth : 3
     //protected const BACKTRACE_DEPTH = 0;
 }
 
-TgLogger::send(TgLogger::EXAMPLE_SUBSCRIBER, 'Your message');
+TgLogger::send(TgLogger::EXAMPLE_SUBSCRIBER, 'Your message', LogLevel::INFO);
 
 TgLogger::sendDoc(TgLogger::EXAMPLE_SUBSCRIBER, $pathToFile);
  ```
