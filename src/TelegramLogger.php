@@ -35,7 +35,7 @@ class TelegramLogger
     /**
      * @desc Maximum depth of backtrace calls included in messages. If set to 0, no backtrace will be shown.
      */
-    protected const BACKTRACE_DEPTH = 3;
+    protected const BACKTRACE_DEPTH = 1;
 
     private static ?TelegramLogger $instance = null; //singleton
     private ?string $instanceError;
@@ -45,10 +45,11 @@ class TelegramLogger
         $this->instanceError = $this->_instanceError();
     }
 
-    public static function send(string|array $subscribers, string $message, LogLevel $level = LogLevel::INFO): void
+    public static function send(string|array $subscribers, string|array|object $message, LogLevel $level = LogLevel::INFO): void
     {
         if (!self::_init()) return;
-        if (static::TTL > 0 && apcu_exists('telegram_' . sha1($message))) return; //the same message has already been sent
+        if (!is_string($message)) $message = json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        if (static::TTL > 0 && apcu_exists('tg_logger_' . sha1($message))) return; //the same message has already been sent
 
         $message = $level->toString() . self::_addBackTrace() . "\n$message";
 
@@ -61,10 +62,10 @@ class TelegramLogger
         foreach ($subscribers as $subscriber) {
             $chatId = self::$instance->chatsIds[$subscriber] ?? null;
             if (!$chatId) continue;
-            self::_request(self::METHOD_SEND_MESSAGE, ['parse_mode'=> 'MarkdownV2', 'chat_id' => $chatId, 'text' => $message]);
+            self::_request(self::METHOD_SEND_MESSAGE, ['parse_mode'=> 'html', 'chat_id' => $chatId, 'text' => $message]);
         }
 
-        if (static::TTL > 0) apcu_add('telegram_' . sha1($message), 1, static::TTL);
+        if (static::TTL > 0) apcu_add('tg_logger_' . sha1($message), 1, static::TTL);
     }
 
     public static function sendDoc(string|array $subscribers, string $pathToFile, bool $deleteFileAfterSend = false): void
@@ -97,7 +98,15 @@ class TelegramLogger
 
             $response = curl_exec($curl);
             curl_close($curl);
-            return json_decode($response, true);
+            if (empty($response)) {
+                LogLevel::ERROR->toOutput('empty response curl');
+                return [];
+            }
+            $response = json_decode($response, true);
+            if (isset($response['ok']) && $response['ok'] === false) {
+                LogLevel::ERROR->toOutput($response['description']);
+            }
+            return $response;
         } catch (Exception $ex) {
             LogLevel::ERROR->toOutput($ex->getMessage());
             return [];
@@ -106,7 +115,7 @@ class TelegramLogger
 
     private static function _messageToFile(string $message): string
     {
-        $pathToFile = tempnam(sys_get_temp_dir(), 'tmp_telegram_file_');
+        $pathToFile = tempnam(sys_get_temp_dir(), 'tmp_tg_logger_file_');
         file_put_contents($pathToFile, $message);
         return $pathToFile;
     }
@@ -153,25 +162,25 @@ class TelegramLogger
             return ($trace['file'] ?? '?') . ':' . ($trace['line'] ?? '?') . ' → ' . ($trace['function'] ?? '?');
         }, $backtrace);
 
-        return "\n`" . implode("\n", $formattedTrace) . "`\n";
+        return "\n<code>" . implode("\n", $formattedTrace) . "</code>\n";
     }
 
-    public static function debug(string|array $subscribers, string $message): void
+    public static function debug(string|array $subscribers, string|array|object $message): void
     {
         self::send($subscribers, $message, LogLevel::DEBUG);
     }
 
-    public static function warning(string|array $subscribers, string $message): void
+    public static function warning(string|array $subscribers, string|array|object $message): void
     {
         self::send($subscribers, $message, LogLevel::WARNING);
     }
 
-    public static function error(string|array $subscribers, string $message): void
+    public static function error(string|array $subscribers, string|array|object $message): void
     {
         self::send($subscribers, $message, LogLevel::ERROR);
     }
 
-    public static function critical(string|array $subscribers, string $message): void
+    public static function critical(string|array $subscribers, string|array|object $message): void
     {
         self::send($subscribers, $message, LogLevel::CRITICAL);
     }

@@ -12,11 +12,11 @@ enum LogLevel {
     public function toString() : string
     {
         return match($this) {
-            self::DEBUG => "~\[DEBUG\]~\n",
-            self::INFO => "\[INFO\]\n",
-            self::WARNING => "_\[WARNING\]_\n",
-            self::ERROR => "*\[ERROR\]*\n",
-            self::CRITICAL => "||\[CRITICAL\]||\n",
+            self::DEBUG => "<s>[DEBUG]</s>\n",
+            self::INFO => "[INFO]\n",
+            self::WARNING => "<i>[WARNING]</i>\n",
+            self::ERROR => "<b>[ERROR]</b>\n",
+            self::CRITICAL => "<span class='tg-spoiler'>[CRITICAL]</span>\n",
         };
     }
 

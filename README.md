@@ -29,7 +29,7 @@ class TgLogger extends TelegramLogger
     //set to empty if you want to always send messages. default [9, 18]
     //protected const WORKING_HOURS_RANGE = [];
     
-    //set to 0 if you don't need backtrace in message. default depth : 3
+    //set to 0 if you don't need backtrace in message. default depth : 1
     //protected const BACKTRACE_DEPTH = 0;
 }
 
