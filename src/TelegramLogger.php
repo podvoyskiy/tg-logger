@@ -50,6 +50,7 @@ class TelegramLogger
         if (!self::_init()) return;
         if (!is_string($message)) $message = json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         if (static::TTL > 0 && apcu_exists('tg_logger_' . sha1($message))) return; //the same message has already been sent
+        if (str_contains($message, '>') || str_contains($message, '<')) $message = htmlspecialchars($message);
 
         $message = $level->toString() . self::_addBackTrace() . "\n$message";
 

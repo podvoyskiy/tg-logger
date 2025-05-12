@@ -13,7 +13,7 @@ composer require podvoyskiy/tg-logger
 
 use Podvoyskiy\TgLogger\TelegramLogger;
 
-class TgLogger extends TelegramLogger
+class Telegram extends TelegramLogger
 {
     protected const TOKEN = ''; //your telegram token
 
@@ -33,7 +33,7 @@ class TgLogger extends TelegramLogger
     //protected const BACKTRACE_DEPTH = 0;
 }
 
-TgLogger::send(TgLogger::EXAMPLE_SUBSCRIBER, 'Your message', LogLevel::INFO);
+Telegram::send(Telegram::EXAMPLE_SUBSCRIBER, 'Your message', LogLevel::INFO);
 
-TgLogger::sendDoc(TgLogger::EXAMPLE_SUBSCRIBER, $pathToFile);
+Telegram::sendDoc(Telegram::EXAMPLE_SUBSCRIBER, $pathToFile);
  ```
