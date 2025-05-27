@@ -28,14 +28,19 @@ class TelegramLogger
     protected const TTL = 0;
 
     /**
-     * @desc set to empty if you want to always send messages
+     * @desc override if you need to send messages only at certain times. Example : [9, 18]
      */
-    protected const WORKING_HOURS_RANGE = [9, 18];
+    protected const WORKING_HOURS_RANGE = [];
 
     /**
      * @desc Maximum depth of backtrace calls included in messages. If set to 0, no backtrace will be shown.
      */
     protected const BACKTRACE_DEPTH = 1;
+
+    /**
+     * @desc List in the child the classes that should be excluded from backtrace. Example : [SomeClass::class]
+     */
+    protected const EXCLUDED_CLASSES_FROM_BACKTRACE = [];
 
     private static ?TelegramLogger $instance = null; //singleton
     private ?string $instanceError;
@@ -155,8 +160,16 @@ class TelegramLogger
     private static function _addBackTrace(): string
     {
         if (static::BACKTRACE_DEPTH <= 0) return '';
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, static::BACKTRACE_DEPTH + 2);
-        $backtrace = array_filter($backtrace, function ($trace) { return !str_contains($trace['file'], 'TelegramLogger'); });
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+
+        $excludedClassesFromBacktrace = [self::class];
+        array_push($excludedClassesFromBacktrace, ...static::EXCLUDED_CLASSES_FROM_BACKTRACE);
+        $backtrace = array_filter($backtrace, function ($trace) use ($excludedClassesFromBacktrace) {
+            foreach ($excludedClassesFromBacktrace as $class) {
+                if (str_contains($trace['file'], basename(str_replace('\\', '/', $class)))) return false;
+            }
+            return true;
+        });
         if (count($backtrace) > static::BACKTRACE_DEPTH) array_splice($backtrace, -(count($backtrace) - static::BACKTRACE_DEPTH));
 
         $formattedTrace = array_map(function ($trace) {

@@ -26,11 +26,14 @@ class Telegram extends TelegramLogger
     //if you need a limit on same messages (for example 30 min). required apcu extension
     //protected const TTL = 30 * 60; 
     
-    //set to empty if you want to always send messages. default [9, 18]
-    //protected const WORKING_HOURS_RANGE = [];
+    //set values if you need to send messages only at certain times
+    //protected const WORKING_HOURS_RANGE = [9, 18];
     
     //set to 0 if you don't need backtrace in message. default depth : 1
     //protected const BACKTRACE_DEPTH = 0;
+    
+    //List here the classes that should be excluded from backtrace
+    //protected const EXCLUDED_CLASSES_FROM_BACKTRACE = [SomeClass::class];
 }
 
 Telegram::send(Telegram::EXAMPLE_SUBSCRIBER, 'Your message', LogLevel::INFO);
