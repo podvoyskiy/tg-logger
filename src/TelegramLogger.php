@@ -166,7 +166,7 @@ class TelegramLogger
         array_push($excludedClassesFromBacktrace, ...static::EXCLUDED_CLASSES_FROM_BACKTRACE);
         $backtrace = array_filter($backtrace, function ($trace) use ($excludedClassesFromBacktrace) {
             foreach ($excludedClassesFromBacktrace as $class) {
-                if (str_contains($trace['file'], basename(str_replace('\\', '/', $class)))) return false;
+                if (str_contains($trace['file'] ?? '', basename(str_replace('\\', '/', $class)))) return false;
             }
             return true;
         });
