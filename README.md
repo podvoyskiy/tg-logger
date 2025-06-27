@@ -23,7 +23,10 @@ class Telegram extends TelegramLogger
     
     public const EXAMPLE_SUBSCRIBER = 'example_subscriber';
     
-    //if you need a limit on same messages (for example 30 min). required apcu extension
+    //if you need set cache storage for same messages. required redis/apcu extension (StorageType::REDIS|StorageType::APCU)
+    //protected const CURRENT_STORAGE = StorageType::REDIS; 
+    
+    //if you need global setting limit on same messages (for example 30 min)
     //protected const TTL = 30 * 60; 
     
     //set values if you need to send messages only at certain times
@@ -37,6 +40,8 @@ class Telegram extends TelegramLogger
 }
 
 Telegram::send(Telegram::EXAMPLE_SUBSCRIBER, 'Your message', LogLevel::INFO);
+
+Telegram::warning(Telegram::EXAMPLE_SUBSCRIBER, 'Your warning', 60); //60 - ttl for this message
 
 Telegram::sendDoc(Telegram::EXAMPLE_SUBSCRIBER, $pathToFile);
  ```

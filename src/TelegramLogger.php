@@ -3,6 +3,10 @@
 namespace Podvoyskiy\TgLogger;
 
 use Exception;
+use Podvoyskiy\TgLogger\storage\Storage;
+use Podvoyskiy\TgLogger\storage\StorageApcu;
+use Podvoyskiy\TgLogger\storage\StorageRedis;
+use Podvoyskiy\TgLogger\storage\StorageType;
 
 class TelegramLogger
 {
@@ -23,7 +27,12 @@ class TelegramLogger
     protected array $chatsIds = [];
 
     /**
-     * @desc override if you need a limit on same messages (in sec.)
+     * @desc override if need set cache storage for same messages (StorageType::REDIS|StorageType::APCU)
+     */
+    protected const CURRENT_STORAGE = null;
+
+    /**
+     * @desc override if you need global setting limit on same messages (in sec.)
      */
     protected const TTL = 0;
 
@@ -43,6 +52,7 @@ class TelegramLogger
     protected const EXCLUDED_CLASSES_FROM_BACKTRACE = [];
 
     private static ?TelegramLogger $instance = null; //singleton
+    private ?Storage $storage = null;
     private ?string $instanceError;
 
     protected function __construct()
@@ -50,11 +60,10 @@ class TelegramLogger
         $this->instanceError = $this->_instanceError();
     }
 
-    public static function send(string|array $subscribers, string|array|object $message, LogLevel $level = LogLevel::INFO): void
+    public static function send(string|array $subscribers, string|array|object $message, LogLevel $level = LogLevel::INFO, ?int $ttl = null): void
     {
         if (!self::_init()) return;
         if (!is_string($message)) $message = json_encode($message, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        if (static::TTL > 0 && apcu_exists('tg_logger_' . sha1($message))) return; //the same message has already been sent
         if (str_contains($message, '>') || str_contains($message, '<')) $message = htmlspecialchars($message);
 
         $message = $level->toString() . self::_addBackTrace() . "\n$message";
@@ -64,6 +73,9 @@ class TelegramLogger
             return;
         }
 
+        $ttl ??= static::TTL;
+        if ($ttl > 0 && self::$instance->storage instanceof Storage && self::$instance->storage->exists($message)) return; //the same message has already been sent
+
         if (!is_array($subscribers)) $subscribers = [$subscribers];
         foreach ($subscribers as $subscriber) {
             $chatId = self::$instance->chatsIds[$subscriber] ?? null;
@@ -71,7 +83,7 @@ class TelegramLogger
             self::_request(self::METHOD_SEND_MESSAGE, ['parse_mode'=> 'html', 'chat_id' => $chatId, 'text' => $message]);
         }
 
-        if (static::TTL > 0) apcu_add('tg_logger_' . sha1($message), 1, static::TTL);
+        if ($ttl > 0 && self::$instance->storage instanceof Storage) self::$instance->storage->add($message, $ttl);
     }
 
     public static function sendDoc(string|array $subscribers, string $pathToFile, bool $deleteFileAfterSend = false): void
@@ -152,7 +164,10 @@ class TelegramLogger
 
         if (!is_int(static::BACKTRACE_DEPTH)) return 'incorrect const BACKTRACE_DEPTH';
 
-        if (static::TTL > 0 && (!function_exists('apcu_enabled') || apcu_enabled() === false)) return 'apcu extension not supported';
+        if (!is_null(static::CURRENT_STORAGE)) {
+            $this->storage = static::CURRENT_STORAGE === StorageType::REDIS ? new StorageRedis() : new StorageApcu();
+            if ($this->storage->enable() === false) return 'current storage ' . static::CURRENT_STORAGE->value . ' not supported';
+        }
 
         return null;
     }
@@ -179,23 +194,23 @@ class TelegramLogger
         return "\n<code>" . implode("\n", $formattedTrace) . "</code>\n";
     }
 
-    public static function debug(string|array $subscribers, string|array|object $message): void
+    public static function debug(string|array $subscribers, string|array|object $message, ?int $ttl = null): void
     {
-        self::send($subscribers, $message, LogLevel::DEBUG);
+        self::send($subscribers, $message, LogLevel::DEBUG, $ttl);
     }
 
-    public static function warning(string|array $subscribers, string|array|object $message): void
+    public static function warning(string|array $subscribers, string|array|object $message, ?int $ttl = null): void
     {
-        self::send($subscribers, $message, LogLevel::WARNING);
+        self::send($subscribers, $message, LogLevel::WARNING, $ttl);
     }
 
-    public static function error(string|array $subscribers, string|array|object $message): void
+    public static function error(string|array $subscribers, string|array|object $message, ?int $ttl = null): void
     {
-        self::send($subscribers, $message, LogLevel::ERROR);
+        self::send($subscribers, $message, LogLevel::ERROR, $ttl);
     }
 
-    public static function critical(string|array $subscribers, string|array|object $message): void
+    public static function critical(string|array $subscribers, string|array|object $message, ?int $ttl = null): void
     {
-        self::send($subscribers, $message, LogLevel::CRITICAL);
+        self::send($subscribers, $message, LogLevel::CRITICAL, $ttl);
     }
 }
