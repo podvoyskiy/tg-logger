@@ -4,9 +4,9 @@ namespace Podvoyskiy\TgLogger\storage;
 
 use Podvoyskiy\TgLogger\LogLevel;
 
-class StorageRedis implements Storage
+class StorageRedis extends Storage
 {
-    private $redis;
+    private \Redis $redis;
 
     public function add(string $message, int $ttl): void
     {
@@ -25,7 +25,7 @@ class StorageRedis implements Storage
             $this->redis = new \Redis();
             return $this->redis->connect('127.0.0.1', 6379, 2) && $this->redis->ping() === true;
         } catch (\Exception $e) {
-            LogLevel::WARNING->toOutput($e->getMessage());
+            LogLevel::ERROR->toOutput($e->getMessage());
             return false;
         }
     }

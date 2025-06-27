@@ -2,7 +2,7 @@
 
 namespace Podvoyskiy\TgLogger\storage;
 
-class StorageApcu implements Storage
+class StorageApcu extends Storage
 {
     public function add(string $message, int $ttl): void
     {

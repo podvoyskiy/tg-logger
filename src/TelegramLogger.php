@@ -4,8 +4,6 @@ namespace Podvoyskiy\TgLogger;
 
 use Exception;
 use Podvoyskiy\TgLogger\storage\Storage;
-use Podvoyskiy\TgLogger\storage\StorageApcu;
-use Podvoyskiy\TgLogger\storage\StorageRedis;
 use Podvoyskiy\TgLogger\storage\StorageType;
 
 class TelegramLogger
@@ -58,6 +56,7 @@ class TelegramLogger
     protected function __construct()
     {
         $this->instanceError = $this->_instanceError();
+        if (!is_null(static::$currentStorage)) $this->storage = Storage::create(static::$currentStorage);
     }
 
     public static function send(string|array $subscribers, string|array|object $message, LogLevel $level = LogLevel::INFO, ?int $ttl = null): void
@@ -163,11 +162,6 @@ class TelegramLogger
         }
 
         if (!is_int(static::BACKTRACE_DEPTH)) return 'incorrect const BACKTRACE_DEPTH';
-
-        if (!is_null(static::$currentStorage)) {
-            $this->storage = static::$currentStorage === StorageType::REDIS ? new StorageRedis() : new StorageApcu();
-            if ($this->storage->enable() === false) return 'current storage ' . static::$currentStorage->name . ' not supported';
-        }
 
         return null;
     }
