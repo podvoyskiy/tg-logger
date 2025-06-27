@@ -29,7 +29,7 @@ class TelegramLogger
     /**
      * @desc override if need set cache storage for same messages (StorageType::REDIS|StorageType::APCU)
      */
-    protected const CURRENT_STORAGE = null;
+    protected static ?StorageType $currentStorage = null;
 
     /**
      * @desc override if you need global setting limit on same messages (in sec.)
@@ -164,9 +164,9 @@ class TelegramLogger
 
         if (!is_int(static::BACKTRACE_DEPTH)) return 'incorrect const BACKTRACE_DEPTH';
 
-        if (!is_null(static::CURRENT_STORAGE)) {
-            $this->storage = static::CURRENT_STORAGE === StorageType::REDIS ? new StorageRedis() : new StorageApcu();
-            if ($this->storage->enable() === false) return 'current storage ' . static::CURRENT_STORAGE->value . ' not supported';
+        if (!is_null(static::$currentStorage)) {
+            $this->storage = static::$currentStorage === StorageType::REDIS ? new StorageRedis() : new StorageApcu();
+            if ($this->storage->enable() === false) return 'current storage ' . static::$currentStorage->name . ' not supported';
         }
 
         return null;

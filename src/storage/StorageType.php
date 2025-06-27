@@ -2,8 +2,8 @@
 
 namespace Podvoyskiy\TgLogger\storage;
 
-enum StorageType: string
+enum StorageType
 {
-    case APCU = 'apcu';
-    case REDIS = 'redis';
+    case APCU;
+    case REDIS;
 }
