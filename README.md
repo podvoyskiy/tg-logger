@@ -15,11 +15,18 @@ use Podvoyskiy\TgLogger\TelegramLogger;
 
 class Telegram extends TelegramLogger
 {
-    protected const TOKEN = ''; //your telegram token
-
-    protected array $chatsIds = [
-        self::EXAMPLE_SUBSCRIBER => '111111111' //telegram id subscriber
-    ];
+    protected static function setToken(): void
+    {
+        // example: get token from environment variable
+        self::$token = (string)getenv('TELEGRAM_TOKEN');
+    }
+    
+    protected function setChatsIds(): void
+    {
+        $this->chatsIds = [
+            self::EXAMPLE_SUBSCRIBER => getenv('TELEGRAM_CHAT_ID')
+        ];
+    }
     
     public const EXAMPLE_SUBSCRIBER = 'example_subscriber';
     

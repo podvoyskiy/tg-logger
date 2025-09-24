@@ -6,7 +6,7 @@ use Exception;
 use Podvoyskiy\TgLogger\storage\Storage;
 use Podvoyskiy\TgLogger\storage\StorageType;
 
-class TelegramLogger
+abstract class TelegramLogger
 {
     private const URI = 'https://api.telegram.org/bot%s/%s';
 
@@ -14,15 +14,11 @@ class TelegramLogger
     private const METHOD_SEND_DOCUMENT = 'sendDocument';
     private const METHOD_GET_ME = 'getMe';
 
-    /**
-     * @desc need override
-     */
-    protected const TOKEN = '';
+    protected static string $token = '';
+    protected abstract static function setToken(): void;
 
-    /**
-     * @desc need override
-     */
     protected array $chatsIds = [];
+    protected abstract function setChatsIds(): void;
 
     /**
      * @desc override if need set cache storage for same messages (StorageType::REDIS|StorageType::APCU)
@@ -55,6 +51,8 @@ class TelegramLogger
 
     protected function __construct()
     {
+        static::setToken();
+        $this->setChatsIds();
         $this->instanceError = $this->_instanceError();
         if (!is_null(static::$currentStorage)) $this->storage = Storage::create(static::$currentStorage);
     }
@@ -103,7 +101,7 @@ class TelegramLogger
     private static function _request(string $method, ?array $params = null): array
     {
         try {
-            $url = sprintf(self::URI, static::TOKEN, $method);
+            $url = sprintf(self::URI, self::$token, $method);
             $curl = curl_init($url);
             curl_setopt_array($curl, [
                 CURLOPT_SSL_VERIFYPEER => 0,
@@ -150,7 +148,7 @@ class TelegramLogger
 
     private function _instanceError(): ?string
     {
-        if (!preg_match('/^\d+:\w+$/', static::TOKEN)) return 'incorrect token telegram';
+        if (!preg_match('/^\d+:\w+$/', self::$token)) return 'incorrect token telegram';
 
         if (empty(self::_request(self::METHOD_GET_ME)['ok'])) return 'invalid token telegram';
 
