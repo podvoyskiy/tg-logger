@@ -45,6 +45,11 @@ abstract class TelegramLogger
      */
     protected const EXCLUDED_CLASSES_FROM_BACKTRACE = [];
 
+    /**
+     * @desc Max. number of seconds to allow http request to execute
+     */
+    protected const TIMEOUT_REQUEST = 0;
+
     private static ?TelegramLogger $instance = null; //singleton
     private ?Storage $storage = null;
     private ?string $instanceError;
@@ -108,6 +113,7 @@ abstract class TelegramLogger
                 CURLOPT_SSL_VERIFYHOST => false,
                 CURLOPT_POST => 1,
                 CURLOPT_RETURNTRANSFER => 1,
+                CURLOPT_TIMEOUT => static::TIMEOUT_REQUEST,
             ]);
             if ($params) curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
 

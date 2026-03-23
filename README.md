@@ -44,6 +44,9 @@ class Telegram extends TelegramLogger
     
     //List here the classes that should be excluded from backtrace
     //protected const EXCLUDED_CLASSES_FROM_BACKTRACE = [SomeClass::class];
+    
+    //Max. number of seconds to allow http request to execute
+    //protected const TIMEOUT_REQUEST = 5;
 }
 
 Telegram::send(Telegram::EXAMPLE_SUBSCRIBER, 'Your message', LogLevel::INFO);
