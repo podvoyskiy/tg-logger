@@ -15,7 +15,10 @@ abstract class TelegramLogger
     private const METHOD_GET_ME = 'getMe';
 
     protected static string $token = '';
+    protected static ?ProxyConfig $proxy = null;
+
     protected abstract static function setToken(): void;
+    protected abstract static function setProxy(): void;
 
     protected array $chatsIds = [];
     protected abstract function setChatsIds(): void;
@@ -57,6 +60,7 @@ abstract class TelegramLogger
     protected function __construct()
     {
         static::setToken();
+        static::setProxy();
         $this->setChatsIds();
         $this->instanceError = $this->_instanceError();
         if (!is_null(static::$currentStorage)) $this->storage = Storage::create(static::$currentStorage);
@@ -108,14 +112,27 @@ abstract class TelegramLogger
         try {
             $url = sprintf(self::URI, self::$token, $method);
             $curl = curl_init($url);
-            curl_setopt_array($curl, [
+            $options = [
                 CURLOPT_SSL_VERIFYPEER => 0,
                 CURLOPT_SSL_VERIFYHOST => false,
                 CURLOPT_POST => 1,
                 CURLOPT_RETURNTRANSFER => 1,
                 CURLOPT_TIMEOUT => static::TIMEOUT_REQUEST,
-            ]);
-            if ($params) curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
+            ];
+
+            if ($params) $options[CURLOPT_POSTFIELDS] = $params;
+
+            if (self::$proxy && self::$proxy->isValid()) {
+                $options[CURLOPT_PROXY] = self::$proxy->host . ':' . self::$proxy->port;
+                $options[CURLOPT_PROXYTYPE] = CURLPROXY_SOCKS5;
+                $options[CURLOPT_HTTPPROXYTUNNEL] = 1;
+
+                if (self::$proxy->hasAuth()) {
+                    $options[CURLOPT_PROXYUSERPWD] = self::$proxy->user . ':' . self::$proxy->pass;
+                }
+            }
+
+            curl_setopt_array($curl, $options);
 
             $response = curl_exec($curl);
             curl_close($curl);

@@ -21,6 +21,11 @@ class Telegram extends TelegramLogger
         self::$token = (string)getenv('TELEGRAM_TOKEN');
     }
     
+    protected static function setProxy(): void
+    {
+        self::$proxy = new ProxyConfig(host: '1.1.1.1', port: 1080);
+    }
+    
     protected function setChatsIds(): void
     {
         $this->chatsIds = [
