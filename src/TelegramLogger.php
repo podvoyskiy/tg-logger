@@ -124,7 +124,7 @@ abstract class TelegramLogger
 
             if (self::$proxy && self::$proxy->isValid()) {
                 $options[CURLOPT_PROXY] = self::$proxy->host . ':' . self::$proxy->port;
-                $options[CURLOPT_PROXYTYPE] = CURLPROXY_SOCKS5;
+                $options[CURLOPT_PROXYTYPE] = self::$proxy->type;
                 $options[CURLOPT_HTTPPROXYTUNNEL] = 1;
 
                 if (self::$proxy->hasAuth()) {
